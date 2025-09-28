@@ -8,7 +8,7 @@
 
 
 body {
-  background: #5ea7d4;
+  background: #5D866C;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -18,7 +18,7 @@ body {
 .container {
   background: #ffffff;
   padding: 25px;
-  width: 550px;
+  width: 850px;
   border-radius: 10px;
 }
 
@@ -55,7 +55,7 @@ body {
   height: 55px;
   width: 55px;
   padding: 15px;
-  background: limegreen;
+  background: #63C8FF;
 }
 
 ul li {

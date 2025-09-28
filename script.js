@@ -8,39 +8,33 @@ if (!todo) {
   todo = [];
 }
 
-
+let updateText = null;
 
 function CreateToDoItems() {
-  if (todoValue.value === "") {
+  const value = todoValue.value.trim();
+  if (value === "") {
     todoAlert.innerText = "Please enter your todo text!";
     todoValue.focus();
-  } else {
-    let IsPresent = false;
-    todo.forEach((element) => {
-      if (element.item == todoValue.value) {
-        IsPresent = true;
-      }
-    });
-
-    if (IsPresent) {
-      setAlertMessage("This item already present in the list!");
-      return;
-    }
-
-    let li = document.createElement("li");
-    const todoItems = `<div title="Hit Double Click and Complete" ondblclick="CompletedToDoItems(this)">${todoValue.value}</div><div>
-                    <img class="edit todo-controls" onclick="UpdateToDoItems(this)" src="/images/pencil.png" />
-                    <img class="delete todo-controls" onclick="DeleteToDoItems(this)" src="/images/delete.png" /></div></div>`;
-    li.innerHTML = todoItems;
-    listItems.appendChild(li);
-
-    if (!todo) {
-      todo = [];
-    }
-    let itemList = { item: todoValue.value, status: false };
-    todo.push(itemList);
-    setLocalStorage();
+    return;
   }
+
+  const isPresent = todo.some((element) => element.item === value);
+  if (isPresent) {
+    setAlertMessage("This item already present in the list!");
+    return;
+  }
+
+  const li = document.createElement("li");
+  li.innerHTML = `<div class="todo-text" title="Hit Double Click and Complete" ondblclick="CompletedToDoItems(this)">${value}</div>
+                  <div>
+                    <img class="edit todo-controls" onclick="UpdateToDoItems(this)" src="./images/pencil.png" alt="Edit todo" />
+                    <img class="delete todo-controls" onclick="DeleteToDoItems(this)" src="./images/delete.png" alt="Delete todo" />
+                  </div>`;
+  listItems.appendChild(li);
+
+  todo.push({ item: value, status: false });
+  setLocalStorage();
+
   todoValue.value = "";
   setAlertMessage("Todo item Created Successfully!");
 }
@@ -49,70 +43,67 @@ function CreateToDoItems() {
 
 function ReadToDoItems() {
   todo.forEach((element) => {
-    let li = document.createElement("li");
-    let style = "";
-    if (element.status) {
-      style = "style='text-decoration: line-through'";
-    }
-    const todoItems = `<div ${style} title="Hit Double Click and Complete" ondblclick="CompletedToDoItems(this)">${
-      element.item
-    }
-    ${
-      style === ""
-        ? ""
-        : '<img class="todo-controls" src="/images/check-mark.png" />'
-    }</div><div>
-    ${
-      style === ""
-        ? '<img class="edit todo-controls" onclick="UpdateToDoItems(this)" src="/images/pencil.png" />'
-        : ""
-    }
-    <img class="delete todo-controls" onclick="DeleteToDoItems(this)" src="/images/delete.png" /></div></div>`;
-    li.innerHTML = todoItems;
+    const li = document.createElement("li");
+    const isCompleted = element.status;
+    const textDecoration = isCompleted ? "style='text-decoration: line-through'" : "";
+    const editButton = isCompleted
+      ? ""
+      : '<img class="edit todo-controls" onclick="UpdateToDoItems(this)" src="./images/pencil.png" alt="Edit todo" />';
+    const completionBadge = isCompleted
+      ? '<img class="todo-controls" src="./images/check-mark.png" alt="Completed" />'
+      : "";
+
+    li.innerHTML = `<div class="todo-text" ${textDecoration} title="Hit Double Click and Complete" ondblclick="CompletedToDoItems(this)">${element.item}${completionBadge}</div>
+                    <div>
+                      ${editButton}
+                      <img class="delete todo-controls" onclick="DeleteToDoItems(this)" src="./images/delete.png" alt="Delete todo" />
+                    </div>`;
     listItems.appendChild(li);
   });
 }
-ReadToDoItems()
+ReadToDoItems();
 
 
 
 function UpdateToDoItems(e) {
-  if (
-    e.parentElement.parentElement.querySelector("div").style.textDecoration ===
-    ""
-  ) {
-    todoValue.value =
-      e.parentElement.parentElement.querySelector("div").innerText;
-    updateText = e.parentElement.parentElement.querySelector("div");
+  const itemWrapper = e.closest("li");
+  const textElement = itemWrapper.querySelector(".todo-text");
+  if (textElement.style.textDecoration === "") {
+    todoValue.value = textElement.textContent.trim();
+    updateText = textElement;
     addUpdate.setAttribute("onclick", "UpdateOnSelectionItems()");
-    addUpdate.setAttribute("src", "/images/refresh.png");
+    addUpdate.setAttribute("src", "./images/refresh.png");
     todoValue.focus();
   }
 }
 
 function UpdateOnSelectionItems() {
-  let IsPresent = false;
-  todo.forEach((element) => {
-    if (element.item == todoValue.value) {
-      IsPresent = true;
-    }
-  });
+  const newValue = todoValue.value.trim();
+  if (newValue === "") {
+    setAlertMessage("Please enter your todo text!");
+    todoValue.focus();
+    return;
+  }
 
-  if (IsPresent) {
+  const isPresent = todo.some(
+    (element) => element.item === newValue && element.item !== updateText.innerText.trim()
+  );
+
+  if (isPresent) {
     setAlertMessage("This item already present in the list!");
     return;
   }
 
   todo.forEach((element) => {
-    if (element.item == updateText.innerText.trim()) {
-      element.item = todoValue.value;
+    if (element.item === updateText.innerText.trim()) {
+      element.item = newValue;
     }
   });
   setLocalStorage();
 
-  updateText.innerText = todoValue.value;
+  updateText.innerText = newValue;
   addUpdate.setAttribute("onclick", "CreateToDoItems()");
-  addUpdate.setAttribute("src", "/images/plus.png");
+  addUpdate.setAttribute("src", "./images/plus.png");
   todoValue.value = "";
   setAlertMessage("Todo item Updated Successfully!");
 }
@@ -121,21 +112,20 @@ function UpdateOnSelectionItems() {
 
 
 function DeleteToDoItems(e) {
-  let deleteValue =
-    e.parentElement.parentElement.querySelector("div").innerText;
+  const itemWrapper = e.closest("li");
+  const deleteValue = itemWrapper.querySelector(".todo-text").innerText.trim();
 
   if (confirm(`Are you sure. Due you want to delete this ${deleteValue}!`)) {
-    e.parentElement.parentElement.setAttribute("class", "deleted-item");
+    itemWrapper.setAttribute("class", "deleted-item");
     todoValue.focus();
 
-    todo.forEach((element) => {
-      if (element.item == deleteValue.trim()) {
-        todo.splice(element, 1);
-      }
-    });
+    const index = todo.findIndex((element) => element.item === deleteValue);
+    if (index !== -1) {
+      todo.splice(index, 1);
+    }
 
     setTimeout(() => {
-      e.parentElement.parentElement.remove();
+      itemWrapper.remove();
     }, 1000);
 
     setLocalStorage();
@@ -145,18 +135,20 @@ function DeleteToDoItems(e) {
 
 
 function CompletedToDoItems(e) {
-  if (e.parentElement.querySelector("div").style.textDecoration === "") {
+  const textElement = e.parentElement.querySelector(".todo-text") || e;
+  if (textElement.style.textDecoration === "") {
     const img = document.createElement("img");
-    img.src = "/images/check-mark.png";
+    img.src = "./images/check-mark.png";
     img.className = "todo-controls";
-    e.parentElement.querySelector("div").style.textDecoration = "line-through";
-    e.parentElement.querySelector("div").appendChild(img);
-    e.parentElement.querySelector("img.edit").remove();
+    textElement.style.textDecoration = "line-through";
+    textElement.appendChild(img);
+    const editIcon = e.parentElement.querySelector("img.edit");
+    if (editIcon) {
+      editIcon.remove();
+    }
 
     todo.forEach((element) => {
-      if (
-        e.parentElement.querySelector("div").innerText.trim() == element.item
-      ) {
+      if (textElement.innerText.trim() === element.item) {
         element.status = true;
       }
     });
@@ -180,4 +172,3 @@ function setAlertMessage(message) {
     todoAlert.classList.add("toggleMe");
   }, 1000);
 }
-
